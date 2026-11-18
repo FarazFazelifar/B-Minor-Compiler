@@ -201,4 +201,11 @@ for char in ("é", "م", "€", "😀"):
     assert r.returncode == 1 and r.stderr.count("invalid character") == 1
     assert "<stdin>:1:1 INVALID " + char in r.stdout and "<stdin>:1:3 IDENTIFIER x" in r.stdout
 
+for source, position in (('s: string = "é"; x: integer;', 18), ('/* 😀 */ x: integer;', 9), ('// م\nx: integer;', 1)):
+    r = run("tokens", source)
+    assert r.returncode == 0 and f":{position} IDENTIFIER x" in r.stdout, r.stdout
+
+r = subprocess.run(["./bminor", "tokens"], input=b"\xf0\x80 x: integer;", capture_output=True)
+assert r.returncode == 1 and r.stdout.count(b"INVALID") == 2 and b":1:4 IDENTIFIER x" in r.stdout
+
 print("regression groups passed")

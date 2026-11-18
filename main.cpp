@@ -15,11 +15,12 @@ struct Error { string msg, file; int line, col; };
 
 class Lexer {
     string src, file;
-    size_t pos = 0;
+    size_t pos = 0, utf8End = 0;
     int line = 1, col = 1;
     bool done() const { return pos >= src.size(); }
     char peek(size_t n = 0) const { return pos + n < src.size() ? src[pos + n] : '\0'; }
-    char take() { if (done()) return '\0'; char c = src[pos++]; if (c == '\r' || (c == '\n' && (pos < 2 || src[pos-2] != '\r'))) { ++line; col = 1; } else if (c != '\n') ++col; return c; }
+    int utf8Length() const { unsigned char lead=(unsigned char)peek(); int n=lead>=0xC2&&lead<=0xDF?2:lead>=0xE0&&lead<=0xEF?3:lead>=0xF0&&lead<=0xF4?4:1; if(pos+n>src.size())return 1; for(int j=1;j<n;++j){unsigned char b=(unsigned char)peek(j);if(b<0x80||b>0xBF||(j==1&&((lead==0xE0&&b<0xA0)||(lead==0xED&&b>=0xA0)||(lead==0xF0&&b<0x90)||(lead==0xF4&&b>=0x90))))return 1;} return n; }
+    char take() { if (done()) return '\0'; bool continuation=pos<utf8End; if(!continuation)utf8End=pos+utf8Length(); char c = src[pos++]; if (c == '\r' || (c == '\n' && (pos < 2 || src[pos-2] != '\r'))) { ++line; col = 1; } else if (c != '\n' && !continuation) ++col; return c; }
 public:
     vector<Token> tokens; vector<Error> errors;
     Lexer(string s, string f) : src(move(s)), file(move(f)) {}
@@ -61,7 +62,7 @@ public:
                 if(pairs.count(two)) {take();take();k=Kind::Operator;}
                 else if(string("+-*/%=<>!^=").find(c)!=string::npos) {take();k=Kind::Operator;}
                 else if(string("(){}[];,:?.").find(c)!=string::npos) {take();k=Kind::Separator;}
-                else { unsigned char lead=(unsigned char)c; int n=lead>=0xC2&&lead<=0xDF?2:lead>=0xE0&&lead<=0xEF?3:lead>=0xF0&&lead<=0xF4?4:1; bool valid=pos+n<=src.size(); for(int j=1;j<n&&valid;++j){unsigned char b=(unsigned char)peek(j);valid=b>=0x80&&b<=0xBF;if(j==1&&((lead==0xE0&&b<0xA0)||(lead==0xED&&b>=0xA0)||(lead==0xF0&&b<0x90)||(lead==0xF4&&b>=0x90)))valid=false;} if(!valid)n=1; for(int j=0;j<n;++j)take(); col-=n-1; errors.push_back({"invalid character '"+src.substr(st,pos-st)+"'",file,ln,cl}); }
+                else { int n=utf8Length(); for(int j=0;j<n;++j)take(); errors.push_back({"invalid character '"+src.substr(st,pos-st)+"'",file,ln,cl}); }
             }
             tokens.push_back({k,src.substr(st,pos-st),file,ln,cl,st,(int)pos});
         }
