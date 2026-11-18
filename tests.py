@@ -154,4 +154,8 @@ r = run("tokens", "& | ~ x: integer;")
 assert r.returncode == 1 and r.stderr.count("invalid character") == 3
 assert " id x" in r.stdout
 
+for source in ('s: string = "first\\\nsecond";', "c: char = '\\\n';"):
+    r = run("ast", source)
+    assert r.returncode == 1 and "unterminated" in r.stderr, r.stderr
+
 print("regression groups passed")

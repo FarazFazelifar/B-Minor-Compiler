@@ -42,7 +42,7 @@ public:
                     if (x==q) { closed=true; break; }
                     if ((static_cast<unsigned char>(x)&0xC0)!=0x80) ++literalLen;
                     if (q=='\'' && static_cast<unsigned char>(x)>=128) validChar=false;
-                    if (x=='\\' && !done()) {
+                    if (x=='\\' && !done() && peek()!='\n') {
                         char escaped=take();
                         if (q=='\'' && static_cast<unsigned char>(escaped)>=128) validChar=false;
                     }
