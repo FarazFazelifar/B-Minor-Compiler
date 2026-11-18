@@ -8,7 +8,16 @@ The implementation targets the B-Minor rules in `B-Minor-course-1182134.pdf`, no
 
 ## Lexical rules
 
-Identifiers are `[A-Za-z_][A-Za-z0-9_]*`; the course slides cap them at 256 characters (this implementation does not yet enforce that limit). Keywords are `array boolean char else for function if integer print return string void`; `true` and `false` are Boolean literals. Integers are decimal digit sequences. Strings and characters are quoted with backslash escaping; the slides define `\\n`, `\\0`, and backslash-plus-any-other-character as escapes, but this implementation preserves raw lexemes and does not validate escape sequences, literal lengths, or one-character character payloads. Whitespace is skipped; both C/C++ comments are recognized. Longest match handles multi-character operators, including course spellings `=<`, `=>`, `=!`, plus conventional spellings `<`, `>`, `!=`, `<=`, `>=` shown in examples/table variants. The slides themselves are inconsistent: the operator table lists `=<`, `=>`, `=!`, but examples use `<`, `==`; implementation recognizes both forms. Floats are not a B-Minor token and are not recognized as one.
+- Identifier: `[A-Za-z_][A-Za-z0-9_]*`, at most 256 characters.
+- Keywords: `array boolean char else for function if integer print return string void while`.
+- Boolean: `true` or `false`. Integer: `[0-9]+`.
+- String: `"([^"\\\n]|\\[^\n])*"`, at most 256 characters.
+- Character: `'([^'\\\n]|\\[^\n])'`, with one ASCII character or escape.
+- Comments: `//` through the end of the line, or `/*` through the first `*/`.
+- Operators: `+ - * / % = < > ! ^ == != <= >= =< => =! ++ -- && ||`.
+- Separators: `( ) { } [ ] ; , : ? .`. Whitespace is skipped.
+
+The lexer reads the longest identifier or integer, then checks identifiers against keywords and Boolean literals. Two-character operators and comment openers take priority over single-character operators. The course operator table and examples differ, so both `=<`/`=>`/`=!` and `<=`/`>=`/`!=` are accepted. Literal lexemes retain their escapes. Invalid characters and unterminated literals or block comments produce diagnostics; scanning continues.
 
 ## Parser and AST
 
@@ -43,7 +52,7 @@ postfix       = primary { "(" [ expression { "," expression } ] ")" | "[" expres
 primary       = identifier | integer | boolean | string | character | "(" expression ")" ;
 ```
 
-`while`, floating-point values, and C-style declarations are intentionally excluded because the slides do not define them (the slides explicitly say B-Minor has no `while`). This is a Phase 1 syntax parser, not semantic/type checking; it does not enforce `main`, constant-only global initializers, type compatibility, array-size/initializer count, or the slide's stated identifier/string limits.
+`while`, floating-point values, and C-style declarations are intentionally excluded from the parser because the slides do not define them (the slides explicitly say B-Minor has no `while`). This is a Phase 1 syntax parser, not semantic/type checking; it does not enforce `main`, constant-only global initializers, type compatibility, or array-size/initializer count.
 
 Build and run regression checks with:
 
