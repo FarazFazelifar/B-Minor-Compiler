@@ -215,4 +215,10 @@ call = json.loads(r.stdout)["children"][0]["children"][2]["children"][0]["childr
 assert call["kind"] == "CallExpr" and call["children"][0]["children"][0]["column"] == source.index("foo") + 1
 assert '<span class="fn">foo</span>' in run("html", source).stdout
 
+for source, kinds in (("for (; x; ) ;", ["EmptyExpr", "Identifier", "EmptyExpr", "EmptyStmt"]),
+                      ("for (x; ; ) ;", ["Identifier", "EmptyExpr", "EmptyExpr", "EmptyStmt"])):
+    tree = json.loads(run("ast", "f: function void () = { " + source + " }").stdout)
+    loop = tree["children"][0]["children"][2]["children"][0]
+    assert [child["kind"] for child in loop["children"]] == kinds
+
 print("regression groups passed")

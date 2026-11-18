@@ -115,7 +115,7 @@ class Parser {
     }
     unique_ptr<Node> stmt(){Token a=cur();if(accept("{")){auto n=node("BlockStmt",a);while(cur().kind!=Kind::End&&!is("}")){size_t old=i, count=errors.size();n->kids.push_back(stmt());if(errors.size()>count&&i>old&&t[i-1].text!=";"&&t[i-1].text!="}"){while(cur().kind!=Kind::End&&!is(";")&&!is("}")&&!is("if")&&!is("return"))take();accept(";");}if(i==old)take();}Token z=need("}");n->end=z.end;return n;}
         if(accept("if")){auto n=node("IfStmt",a);need("(");n->kids.push_back(expr());need(")");n->kids.push_back(stmt());if(accept("else"))n->kids.push_back(stmt());return n;}
-        if(accept("for")){auto n=node("ForStmt",a);need("(");if(!is(";"))n->kids.push_back(expr());need(";");if(!is(";"))n->kids.push_back(expr());need(";");if(!is(")"))n->kids.push_back(expr());need(")");n->kids.push_back(stmt());return n;}
+        if(accept("for")){auto n=node("ForStmt",a);need("(");n->kids.push_back(is(";")?node("EmptyExpr",cur()):expr());need(";");n->kids.push_back(is(";")?node("EmptyExpr",cur()):expr());need(";");n->kids.push_back(is(")")?node("EmptyExpr",cur()):expr());need(")");n->kids.push_back(stmt());return n;}
         if(accept("return")||accept("print")){auto n=node(a.text=="return"?"ReturnStmt":"PrintStmt",a);if(!is(";")&&cur().kind!=Kind::End){do{n->kids.push_back(expr());}while(a.text=="print"&&accept(","));}need(";");return n;}
         if(accept(";"))return node("EmptyStmt",a);
         if(declarationStart()){if(i+2<t.size()&&t[i+2].text=="function")error("nested function declarations are not allowed");return declaration();}
