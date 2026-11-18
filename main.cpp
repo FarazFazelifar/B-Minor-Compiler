@@ -112,7 +112,7 @@ class Parser {
             string op=cur().text;int p=precedence(op);if(!p||p<minp)break;Token oper=take();auto n=node(p==1?"AssignExpr":p==8?"PowerExpr":"BinaryExpr",oper);n->line=left->line;n->col=left->col;n->start=left->start;n->kids.push_back(move(left));n->kids.push_back(expr(p==1||p==8?p:p+1));left=move(n);
         }return left;
     }
-    unique_ptr<Node> stmt(){Token a=cur();if(accept("{")){auto n=node("BlockStmt",a);while(cur().kind!=Kind::End&&!is("}")){size_t old=i;n->kids.push_back(stmt());if(i==old)take();}Token z=need("}");n->end=z.end;return n;}
+    unique_ptr<Node> stmt(){Token a=cur();if(accept("{")){auto n=node("BlockStmt",a);while(cur().kind!=Kind::End&&!is("}")){size_t old=i, count=errors.size();n->kids.push_back(stmt());if(errors.size()>count&&i>old&&t[i-1].text!=";"&&t[i-1].text!="}"){while(cur().kind!=Kind::End&&!is(";")&&!is("}")&&!is("if")&&!is("return"))take();accept(";");}if(i==old)take();}Token z=need("}");n->end=z.end;return n;}
         if(accept("if")){auto n=node("IfStmt",a);need("(");n->kids.push_back(expr());need(")");n->kids.push_back(stmt());if(accept("else"))n->kids.push_back(stmt());return n;}
         if(accept("for")){auto n=node("ForStmt",a);need("(");if(!is(";"))n->kids.push_back(expr());need(";");if(!is(";"))n->kids.push_back(expr());need(";");if(!is(")"))n->kids.push_back(expr());need(")");n->kids.push_back(stmt());return n;}
         if(accept("return")||accept("print")){auto n=node(a.text=="return"?"ReturnStmt":"PrintStmt",a);if(!is(";")&&cur().kind!=Kind::End){do{n->kids.push_back(expr());}while(a.text=="print"&&accept(","));}need(";");return n;}

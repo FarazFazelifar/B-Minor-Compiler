@@ -187,4 +187,13 @@ source = "main: function integer () = { f: function integer (); }"
 assert '<span class="err">f</span>' in run("html", source).stdout
 assert "\033[31mf\033[0m" in run("ansi", source).stdout
 
+r = run("ast", "main: function integer () = { x: integer = 1 junk junk; return 2; }")
+assert r.returncode == 1 and r.stderr.count("error:") == 1, r.stderr
+block = json.loads(r.stdout)["children"][0]["children"][2]
+assert [node["kind"] for node in block["children"]] == ["VarDecl", "ReturnStmt"]
+for source in ("x: integer = 1 return 2;", "x: integer = ; return 2;"):
+    r = run("ast", "main: function integer () = { " + source + " }")
+    block = json.loads(r.stdout)["children"][0]["children"][2]
+    assert r.returncode == 1 and block["children"][-1]["kind"] == "ReturnStmt", r.stderr
+
 print("regression groups passed")
