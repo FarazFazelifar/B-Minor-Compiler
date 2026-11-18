@@ -179,4 +179,8 @@ r = run("tokens", "1 true 'a' \"a\" ; @")
 for token in ("INTEGER 1", "BOOLEAN true", "CHARACTER 'a'", 'STRING "a"', "SEPARATOR ;", "INVALID @"):
     assert token in r.stdout, r.stdout
 
+r = run("html", "x: integer = 1;")
+assert '<span class="type">integer</span>' in r.stdout
+assert "\033[35minteger\033[0m" in run("ansi", "x: integer = 1;").stdout
+
 print("regression groups passed")
