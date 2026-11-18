@@ -19,7 +19,7 @@ class Lexer {
     int line = 1, col = 1;
     bool done() const { return pos >= src.size(); }
     char peek(size_t n = 0) const { return pos + n < src.size() ? src[pos + n] : '\0'; }
-    char take() { if (done()) return '\0'; char c = src[pos++]; if (c == '\n') { ++line; col = 1; } else ++col; return c; }
+    char take() { if (done()) return '\0'; char c = src[pos++]; if (c == '\r' || (c == '\n' && (pos < 2 || src[pos-2] != '\r'))) { ++line; col = 1; } else if (c != '\n') ++col; return c; }
 public:
     vector<Token> tokens; vector<Error> errors;
     Lexer(string s, string f) : src(move(s)), file(move(f)) {}
@@ -37,12 +37,12 @@ public:
                 take(); while (isdigit((unsigned char)peek())) take(); k = Kind::Integer;
             } else if (c=='"' || c=='\'') {
                 char q=take(); k=q=='"'?Kind::String:Kind::Character; bool closed=false, validChar=true; size_t literalLen=0;
-                while (!done() && peek()!='\n') {
+                while (!done() && peek()!='\n' && peek()!='\r') {
                     char x=take();
                     if (x==q) { closed=true; break; }
                     if ((static_cast<unsigned char>(x)&0xC0)!=0x80) ++literalLen;
                     if (q=='\'' && static_cast<unsigned char>(x)>=128) validChar=false;
-                    if (x=='\\' && !done() && peek()!='\n') {
+                    if (x=='\\' && !done() && peek()!='\n' && peek()!='\r') {
                         char escaped=take();
                         if (q=='\'' && static_cast<unsigned char>(escaped)>=128) validChar=false;
                     }
@@ -50,7 +50,7 @@ public:
                 if (!closed) { k=Kind::Invalid; errors.push_back({q=='"'?"unterminated string literal":"unterminated character literal",file,ln,cl}); }
                 else if (q=='\'' && (!validChar || literalLen!=1)) { k=Kind::Invalid; errors.push_back({"character literal must contain exactly one ASCII character",file,ln,cl}); }
                 else if (q=='"' && literalLen>256) errors.push_back({"string literal exceeds 256 characters",file,ln,cl});
-            } else if (c=='/' && peek(1)=='/') { take(); take(); while(!done()&&peek()!='\n') take(); k=Kind::Comment;
+            } else if (c=='/' && peek(1)=='/') { take(); take(); while(!done()&&peek()!='\n'&&peek()!='\r') take(); k=Kind::Comment;
             } else if (c=='/' && peek(1)=='*') {
                 take(); take(); bool closed=false;
                 while(!done()) { if(peek()=='*'&&peek(1)=='/') {take();take();closed=true;break;} take(); }

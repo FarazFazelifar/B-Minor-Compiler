@@ -7,8 +7,8 @@ B-Minor slides, not the C-like handout appendix. No C-style declarations, floats
 - Identifier: `[A-Za-z_][A-Za-z0-9_]*`, maximum 256 characters.
 - Keywords: `array boolean char else for function if integer print return string void while`.
 - Boolean: `true | false`. Integer: `[0-9]+`.
-- String: `"([^"\\\n]|\\[^\n])*"`, maximum 256 characters.
-- Character: `'([^'\\\n]|\\[^\n])'`, one ASCII character or escape.
+- String: `"([^"\\\r\n]|\\[^\r\n])*"`, maximum 256 characters.
+- Character: `'([^'\\\r\n]|\\[^\r\n])'`, one ASCII character or escape.
 - Comments: `//` to end of line, or `/* ... */`.
 - Operators: `+ - * / % = < > ! ^ == != <= >= =< => =! ++ -- && ||`.
 - Separators: `( ) { } [ ] ; , : ? .`.

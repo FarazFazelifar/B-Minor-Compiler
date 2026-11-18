@@ -166,4 +166,13 @@ r = run("tokens", "return x;")
 assert r.returncode == 0 and not r.stderr, r.stderr
 assert " kw return" in r.stdout and " id x" in r.stdout
 
+r = run("tokens", "a: integer;\rreturn;\r\nx: integer;\ny: integer;")
+assert "<stdin>:2:1 kw return" in r.stdout
+assert "<stdin>:3:1 id x" in r.stdout and "<stdin>:4:1 id y" in r.stdout
+r = run("tokens", '// note\rreturn;')
+assert "<stdin>:2:1 kw return" in r.stdout
+r = run("tokens", '"bad\rreturn;')
+assert r.returncode == 1 and "unterminated string literal" in r.stderr
+assert "<stdin>:2:1 kw return" in r.stdout
+
 print("regression groups passed")
