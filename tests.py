@@ -8,7 +8,7 @@ def run(mode, source):
 
 valid = '''total: integer = 2;
 add: function integer (a: integer, b: integer) = { return a + b; }
-main: function integer () = { x: integer = add(total, 3); if (x =< 5) print "small", x; return x; }
+main: function integer () = { x: integer = add(total, 3); if (x <= 5) print "small", x; return x; }
 '''
 r = run("ast", valid)
 assert r.returncode == 0, r.stderr
@@ -102,9 +102,9 @@ for source in ("a: integer = ; b: integer = 4;", "f: function integer () = { ret
     json.loads(r.stdout)
 assert '"value":"b"' in run("ast", "a: integer = ; b: integer = 4;").stdout
 
-r = run("tokens", "arr: array [2] integer; f: function integer () = { return a ^ b; } x: integer = a =< b; y: integer = a => b; z: boolean = a =! b;")
+r = run("tokens", "arr: array [2] integer; f: function integer () = { return a ^ b; } x: integer = a <= b; y: integer = a >= b; z: boolean = a != b;")
 assert r.returncode == 0, r.stderr
-for token in ("KEYWORD array", "KEYWORD function", "OPERATOR =<", "OPERATOR =>", "OPERATOR =!", "OPERATOR ^"):
+for token in ("KEYWORD array", "KEYWORD function", "OPERATOR <=", "OPERATOR >=", "OPERATOR !=", "OPERATOR ^"):
     assert token in r.stdout, (token, r.stdout)
 
 # AST locations point to the first token in each compound expression.
@@ -228,5 +228,10 @@ assert '"kind":"ReturnStmt"' in r.stdout
 r = run("ast", "main: function integer () = { x: integer = 1 y: integer = 2; return 3; }")
 block = json.loads(r.stdout)["children"][0]["children"][2]
 assert r.returncode == 1 and [n["kind"] for n in block["children"]] == ["VarDecl", "VarDecl", "ReturnStmt"]
+
+r = run("ast", "main: function void () = { x =!y; }")
+tree = json.loads(r.stdout)
+assignment = tree["children"][0]["children"][2]["children"][0]["children"][0]
+assert r.returncode == 0 and assignment["kind"] == "AssignExpr" and assignment["children"][1]["kind"] == "UnaryExpr"
 
 print("regression groups passed")

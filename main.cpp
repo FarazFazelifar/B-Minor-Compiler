@@ -58,7 +58,7 @@ public:
                 if(closed) k=Kind::Comment; else { k=Kind::Invalid; errors.push_back({"unterminated block comment",file,ln,cl}); }
             } else {
                 string two; two+=c; two+=peek(1);
-                static const unordered_set<string> pairs={"==","!=","<=",">=","=<","=>","=!","++","--","&&","||"};
+                static const unordered_set<string> pairs={"==","!=","<=",">=","++","--","&&","||"};
                 if(pairs.count(two)) {take();take();k=Kind::Operator;}
                 else if(string("+-*/%=<>!^=").find(c)!=string::npos) {take();k=Kind::Operator;}
                 else if(string("(){}[];,:?.").find(c)!=string::npos) {take();k=Kind::Separator;}
@@ -97,7 +97,7 @@ class Parser {
         if(accept("function")){auto f=node("FuncDecl",name);f->kids.push_back(move(id));f->kids.push_back(returnType());need("(");if(!is(")")){do{Token p=cur();if(cur().kind!=Kind::Identifier){error("expected parameter name");break;}take();auto param=node("Parameter",p);need(":");param->kids.push_back(type());f->kids.push_back(move(param));}while(accept(","));}need(")");if(accept("="))f->kids.push_back(stmt());else need(";");return f;}
         auto v=node("VarDecl",name);v->kids.push_back(move(id));v->kids.push_back(type());if(accept("=")){if(v->kids.back()->kind=="ArrayType"&&is("{"))v->kids.push_back(arrayInit());else v->kids.push_back(expr());}need(";");return v;
     }
-    int precedence(const string&op){if(op=="=")return 1;if(op=="||")return 2;if(op=="&&")return 3;if(op=="=="||op=="!="||op=="=!")return 4;if(op=="<"||op==">"||op=="=<"||op=="=>"||op=="<="||op==">=")return 5;if(op=="+"||op=="-")return 6;if(op=="*"||op=="/"||op=="%")return 7;if(op=="^")return 8;return 0;}
+    int precedence(const string&op){if(op=="=")return 1;if(op=="||")return 2;if(op=="&&")return 3;if(op=="=="||op=="!=")return 4;if(op=="<"||op==">"||op=="<="||op==">=")return 5;if(op=="+"||op=="-")return 6;if(op=="*"||op=="/"||op=="%")return 7;if(op=="^")return 8;return 0;}
     unique_ptr<Node> expr(int minp=1){
         if(is(";")||is(")")||is("]")||is("}")||is(",")){error("expected expression");return node("Error",cur());}
         Token a=take();unique_ptr<Node> left;

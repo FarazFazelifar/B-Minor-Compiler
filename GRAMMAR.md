@@ -10,10 +10,10 @@ B-Minor slides, not the C-like handout appendix. No C-style declarations, floats
 - String: `"([^"\\\r\n]|\\[^\r\n])*"`, maximum 256 characters.
 - Character: `'([^'\\\r\n]|\\[^\r\n])'`, one ASCII character or escape.
 - Comments: `//` to end of line, or `/* ... */`.
-- Operators: `+ - * / % = < > ! ^ == != <= >= =< => =! ++ -- && ||`.
+- Operators: `+ - * / % = < > ! ^ == != <= >= ++ -- && ||`.
 - Separators: `( ) { } [ ] ; , : ? .`.
 
-Whitespace is skipped. Longest identifiers and integers are read first; keywords follow. Comments and two-character operators take priority. Both slide and conventional comparison spellings are accepted. Invalid characters and unterminated literals or comments produce diagnostics.
+Whitespace is skipped. Longest identifiers and integers are read first; keywords follow. Comments and two-character operators take priority. Invalid characters and unterminated literals or comments produce diagnostics.
 
 ## Parser
 
@@ -43,8 +43,8 @@ expression    = assignment ;
 assignment    = logical-or [ "=" assignment ] ;
 logical-or    = logical-and { "||" logical-and } ;
 logical-and   = equality { "&&" equality } ;
-equality      = relation { ( "==" | "=!" | "!=" ) relation } ;
-relation      = additive { ( "<" | ">" | "=<" | "=>" | "<=" | ">=" ) additive } ;
+equality      = relation { ( "==" | "!=" ) relation } ;
+relation      = additive { ( "<" | ">" | "<=" | ">=" ) additive } ;
 additive      = multiplicative { ( "+" | "-" ) multiplicative } ;
 multiplicative = power { ( "*" | "/" | "%" ) power } ;
 power         = unary [ "^" power ] ;
