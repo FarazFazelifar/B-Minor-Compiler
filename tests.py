@@ -183,4 +183,8 @@ r = run("html", "x: integer = 1;")
 assert '<span class="type">integer</span>' in r.stdout
 assert "\033[35minteger\033[0m" in run("ansi", "x: integer = 1;").stdout
 
+source = "main: function integer () = { f: function integer (); }"
+assert '<span class="err">f</span>' in run("html", source).stdout
+assert "\033[31mf\033[0m" in run("ansi", source).stdout
+
 print("regression groups passed")
