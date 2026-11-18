@@ -98,6 +98,7 @@ class Parser {
     }
     int precedence(const string&op){if(op=="=")return 1;if(op=="||")return 2;if(op=="&&")return 3;if(op=="=="||op=="!="||op=="=!")return 4;if(op=="<"||op==">"||op=="=<"||op=="=>"||op=="<="||op==">=")return 5;if(op=="+"||op=="-")return 6;if(op=="*"||op=="/"||op=="%")return 7;if(op=="^")return 8;return 0;}
     unique_ptr<Node> expr(int minp=1){
+        if(is(";")||is(")")||is("]")||is("}")||is(",")){error("expected expression");return node("Error",cur());}
         Token a=take();unique_ptr<Node> left;
         if(a.kind==Kind::Identifier)left=node("Identifier",a);
         else if(a.kind==Kind::Integer||a.kind==Kind::Boolean||a.kind==Kind::String||a.kind==Kind::Character)left=node("Literal",a);

@@ -158,4 +158,8 @@ for source in ('s: string = "first\\\nsecond";', "c: char = '\\\n';"):
     r = run("ast", source)
     assert r.returncode == 1 and "unterminated" in r.stderr, r.stderr
 
+r = run("ast", "main: function integer () = { print 1 + ; return 2; }")
+assert r.returncode == 1 and r.stderr.count("error:") == 1, r.stderr
+assert '"kind":"ReturnStmt"' in r.stdout
+
 print("regression groups passed")
