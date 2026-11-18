@@ -225,4 +225,8 @@ r = run("ast", "main: function integer () = { print; return; }")
 assert r.returncode == 1 and "expected expression" in r.stderr
 assert '"kind":"ReturnStmt"' in r.stdout
 
+r = run("ast", "main: function integer () = { x: integer = 1 y: integer = 2; return 3; }")
+block = json.loads(r.stdout)["children"][0]["children"][2]
+assert r.returncode == 1 and [n["kind"] for n in block["children"]] == ["VarDecl", "VarDecl", "ReturnStmt"]
+
 print("regression groups passed")
