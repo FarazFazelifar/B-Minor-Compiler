@@ -61,7 +61,7 @@ public:
                 if(pairs.count(two)) {take();take();k=Kind::Operator;}
                 else if(string("+-*/%=<>!^=").find(c)!=string::npos) {take();k=Kind::Operator;}
                 else if(string("(){}[];,:?.").find(c)!=string::npos) {take();k=Kind::Separator;}
-                else { take(); errors.push_back({string("invalid character '")+c+"'",file,ln,cl}); }
+                else { unsigned char lead=(unsigned char)c; int n=lead>=0xC2&&lead<=0xDF?2:lead>=0xE0&&lead<=0xEF?3:lead>=0xF0&&lead<=0xF4?4:1; bool valid=pos+n<=src.size(); for(int j=1;j<n&&valid;++j){unsigned char b=(unsigned char)peek(j);valid=b>=0x80&&b<=0xBF;if(j==1&&((lead==0xE0&&b<0xA0)||(lead==0xED&&b>=0xA0)||(lead==0xF0&&b<0x90)||(lead==0xF4&&b>=0x90)))valid=false;} if(!valid)n=1; for(int j=0;j<n;++j)take(); col-=n-1; errors.push_back({"invalid character '"+src.substr(st,pos-st)+"'",file,ln,cl}); }
             }
             tokens.push_back({k,src.substr(st,pos-st),file,ln,cl,st,(int)pos});
         }

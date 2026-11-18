@@ -196,4 +196,9 @@ for source in ("x: integer = 1 return 2;", "x: integer = ; return 2;"):
     block = json.loads(r.stdout)["children"][0]["children"][2]
     assert r.returncode == 1 and block["children"][-1]["kind"] == "ReturnStmt", r.stderr
 
+for char in ("é", "م", "€", "😀"):
+    r = run("tokens", char + " x: integer;")
+    assert r.returncode == 1 and r.stderr.count("invalid character") == 1
+    assert "<stdin>:1:1 INVALID " + char in r.stdout and "<stdin>:1:3 IDENTIFIER x" in r.stdout
+
 print("regression groups passed")
