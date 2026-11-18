@@ -162,4 +162,8 @@ r = run("ast", "main: function integer () = { print 1 + ; return 2; }")
 assert r.returncode == 1 and r.stderr.count("error:") == 1, r.stderr
 assert '"kind":"ReturnStmt"' in r.stdout
 
+r = run("tokens", "return x;")
+assert r.returncode == 0 and not r.stderr, r.stderr
+assert " kw return" in r.stdout and " id x" in r.stdout
+
 print("regression groups passed")
