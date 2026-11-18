@@ -221,4 +221,8 @@ for source, kinds in (("for (; x; ) ;", ["EmptyExpr", "Identifier", "EmptyExpr",
     loop = tree["children"][0]["children"][2]["children"][0]
     assert [child["kind"] for child in loop["children"]] == kinds
 
+r = run("ast", "main: function integer () = { print; return; }")
+assert r.returncode == 1 and "expected expression" in r.stderr
+assert '"kind":"ReturnStmt"' in r.stdout
+
 print("regression groups passed")

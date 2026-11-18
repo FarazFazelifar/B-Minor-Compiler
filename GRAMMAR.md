@@ -36,7 +36,7 @@ return-type   = atomic-type | "void" ;
 array-initializer = "{" [ expression { "," expression } ] "}" ;
 statement     = block | variable-decl | "if" "(" expression ")" statement [ "else" statement ]
               | "for" "(" [ expression ] ";" [ expression ] ";" [ expression ] ")" statement
-              | "return" [ expression ] ";" | "print" [ expression { "," expression } ] ";"
+              | "return" [ expression ] ";" | "print" expression { "," expression } ";"
               | expression ";" | ";" ;
 block         = "{" { statement } "}" ;
 expression    = assignment ;
