@@ -1,64 +1,9 @@
-# B-Minor Phase 1 implementation
+# B-Minor compiler
 
-Build with `g++ -std=c++17 -Wall -Wextra -pedantic main.cpp -o bminor`.
+Phase 1: lexer, parser, AST, and syntax highlighting.
 
-Run `./bminor html input.bm`, `./bminor ansi input.bm`, `./bminor tokens input.bm`, or `./bminor ast input.bm`. Without a filename, input is read from standard input. Diagnostics go to standard error; a run with lexical or syntax errors exits 1, and an unreadable file exits 2. Output is still produced when diagnostics occur.
+Build: `g++ -std=c++17 -Wall -Wextra -pedantic main.cpp -o bminor`
+Run: `./bminor <tokens|ast|html|ansi> [file]` (stdin without a file)
+Test: `python3 tests.py`
 
-The implementation targets the B-Minor rules in `B-Minor-course-1182134.pdf`, not the C-like grammar in the phase handout appendix. B-Minor declarations use `name: type`, arrays use `array [size] type`, and functions use `name: function return-type (parameters) = body` (or `;` for a prototype). C-style declarations are not accepted.
-
-## Lexical rules
-
-- Identifier: `[A-Za-z_][A-Za-z0-9_]*`, at most 256 characters.
-- Keywords: `array boolean char else for function if integer print return string void while`.
-- Boolean: `true` or `false`. Integer: `[0-9]+`.
-- String: `"([^"\\\n]|\\[^\n])*"`, at most 256 characters.
-- Character: `'([^'\\\n]|\\[^\n])'`, with one ASCII character or escape.
-- Comments: `//` through the end of the line, or `/*` through the first `*/`.
-- Operators: `+ - * / % = < > ! ^ == != <= >= =< => =! ++ -- && ||`.
-- Separators: `( ) { } [ ] ; , : ? .`. Whitespace is skipped.
-
-The lexer reads the longest identifier or integer, then checks identifiers against keywords and Boolean literals. Two-character operators and comment openers take priority over single-character operators. The course operator table and examples differ, so both `=<`/`=>`/`=!` and `<=`/`>=`/`!=` are accepted. Literal lexemes retain their escapes. Invalid characters and unterminated literals or block comments produce diagnostics; scanning continues.
-
-## Parser and AST
-
-Recursive descent handles declarations and statements; precedence climbing handles expressions. The expression rules below avoid left recursion. Statement alternatives start with `{`, `if`, `for`, `return`, `print`, `;`, or an expression/declaration. Both expressions and declarations can start with an identifier: `identifier :` selects a declaration; otherwise it starts an expression. After `identifier :`, `function` selects a function declaration; a type keyword selects a variable. For optional expressions, `;` or `)` ends the expression. `else` is attached to the nearest unmatched `if`; the optional-else grammar has the usual dangling-else FIRST/FOLLOW conflict, resolved by this rule rather than claiming the whole grammar is LL(1).
-
-The parser builds JSON AST nodes with source locations and initially empty `type`. Power (`^`) binds tighter than multiplication and is right-associative; calls, indexing and postfix increments bind tighter than unary operators, which bind tighter than power. Assignment is right-associative. At top level, syntax recovery synchronizes at `;`, `}`, `if`, or `return`.
-
-```ebnf
-program       = { declaration } ;
-declaration   = identifier ":" ( type [ "=" ( expression | array-initializer ) ] ";"
-              | "function" return-type "(" [ parameter { "," parameter } ] ")"
-                ( "=" statement | ";" ) ) ;
-parameter     = identifier ":" type ;
-type          = "integer" | "boolean" | "char" | "string"
-              | "array" "[" [ integer ] "]" ("integer" | "boolean" | "char" | "string") ;
-return-type   = "integer" | "boolean" | "char" | "string" | "void" ;
-array-initializer = "{" [ expression { "," expression } ] "}" ;
-statement     = block | declaration | "if" "(" expression ")" statement [ "else" statement ]
-              | "for" "(" [ expression ] ";" [ expression ] ";" [ expression ] ")" statement
-              | "return" [ expression ] ";" | "print" [ expression { "," expression } ] ";"
-              | expression ";" | ";" ;
-block         = "{" { statement } "}" ;
-expression    = assignment ;
-assignment    = logical-or [ "=" assignment ] ;
-logical-or    = logical-and { "||" logical-and } ;
-logical-and   = equality { "&&" equality } ;
-equality      = relation { ( "==" | "=!" | "!=" ) relation } ;
-relation      = additive { ( "<" | ">" | "=<" | "=>" | "<=" | ">=" ) additive } ;
-additive      = multiplicative { ( "+" | "-" ) multiplicative } ;
-multiplicative = power { ( "*" | "/" | "%" ) power } ;
-power         = unary [ "^" power ] ;
-unary         = ( "!" | "+" | "-" ) unary | postfix ;
-postfix       = primary { "(" [ expression { "," expression } ] ")" | "[" expression "]" | "++" | "--" } ;
-primary       = identifier | integer | boolean | string | character | "(" expression ")" ;
-```
-
-`while`, floating-point values, and C-style declarations are intentionally excluded from the parser because the slides do not define them (the slides explicitly say B-Minor has no `while`). This is a Phase 1 syntax parser, not semantic/type checking; it does not enforce `main`, constant-only global initializers, type compatibility, or array-size/initializer count.
-
-Build and run regression checks with:
-
-```sh
-g++ -std=c++17 -Wall -Wextra -pedantic main.cpp -o bminor
-python3 tests.py
-```
+Grammar and lexer rules: [GRAMMAR.md](GRAMMAR.md)
