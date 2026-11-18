@@ -21,7 +21,9 @@ The lexer reads the longest identifier or integer, then checks identifiers again
 
 ## Parser and AST
 
-Recursive-descent declaration/statement parsing with precedence-climbing expressions builds JSON AST nodes with source location and initially empty `type`. Supported declarations, arrays/initializers/indexing, functions/prototypes, blocks, `if`/`else`, `for`, `return`, `print`, and expression statements are covered. Power (`^`) binds tighter than multiplication and is right-associative; calls/indexing/postfix increments bind tighter, unary `!`, `+`, `-` bind tighter than power. Other operators follow the precedence ordering on slide B-11; assignment is right-associative. Syntax recovery synchronizes at semicolon/brace and `if`/`return`.
+Recursive descent handles declarations and statements; precedence climbing handles expressions. The expression rules below avoid left recursion. Statement alternatives start with `{`, `if`, `for`, `return`, `print`, `;`, or an expression/declaration. Both expressions and declarations can start with an identifier: `identifier :` selects a declaration; otherwise it starts an expression. After `identifier :`, `function` selects a function declaration; a type keyword selects a variable. For optional expressions, `;` or `)` ends the expression. `else` is attached to the nearest unmatched `if`; the optional-else grammar has the usual dangling-else FIRST/FOLLOW conflict, resolved by this rule rather than claiming the whole grammar is LL(1).
+
+The parser builds JSON AST nodes with source locations and initially empty `type`. Power (`^`) binds tighter than multiplication and is right-associative; calls, indexing and postfix increments bind tighter than unary operators, which bind tighter than power. Assignment is right-associative. At top level, syntax recovery synchronizes at `;`, `}`, `if`, or `return`.
 
 ```ebnf
 program       = { declaration } ;
@@ -32,7 +34,7 @@ parameter     = identifier ":" type ;
 type          = "integer" | "boolean" | "char" | "string"
               | "array" "[" [ integer ] "]" ("integer" | "boolean" | "char" | "string") ;
 return-type   = "integer" | "boolean" | "char" | "string" | "void" ;
-array-initializer = "{" expression { "," expression } "}" ;
+array-initializer = "{" [ expression { "," expression } ] "}" ;
 statement     = block | declaration | "if" "(" expression ")" statement [ "else" statement ]
               | "for" "(" [ expression ] ";" [ expression ] ";" [ expression ] ")" statement
               | "return" [ expression ] ";" | "print" [ expression { "," expression } ] ";"
