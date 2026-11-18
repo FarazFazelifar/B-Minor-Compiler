@@ -28,7 +28,7 @@ assert control_ast["children"][0]["children"][2]["value"] == '"a\tb"'
 nul_source = "x: integer = 1;\x00return x;"
 r = run("tokens", nul_source)
 assert r.returncode == 1 and "invalid character" in r.stderr
-assert "\x00" in r.stdout and " kw return" in r.stdout and " id x" in r.stdout
+assert "\x00" in r.stdout and " KEYWORD return" in r.stdout and " IDENTIFIER x" in r.stdout
 
 for source in ("x: integer =", "f: function integer () = { return ", "f: function integer () = { return 1+"):
     r = run("ast", source)
@@ -37,20 +37,20 @@ for source in ("x: integer =", "f: function integer () = { return ", "f: functio
 
 r = run("tokens", "integer x = 3; @\nreturn x;")
 assert r.returncode == 1 and "invalid character" in r.stderr
-assert "<stdin>:2:1 kw return" in r.stdout
+assert "<stdin>:2:1 KEYWORD return" in r.stdout
 
 r = run("tokens", "/* never closed")
 assert r.returncode == 1 and "unterminated block comment" in r.stderr
-assert " err /* never closed" in r.stdout
+assert " INVALID /* never closed" in r.stdout
 
 r = run("tokens", "yes: boolean = true; a: integer; b: integer; a<=b;")
-assert "<stdin>:1:6 kw boolean" in r.stdout
-assert " lit true" in r.stdout and " op <=" in r.stdout
-assert " kw boolean" in r.stdout
+assert "<stdin>:1:6 KEYWORD boolean" in r.stdout
+assert " BOOLEAN true" in r.stdout and " OPERATOR <=" in r.stdout
+assert " KEYWORD boolean" in r.stdout
 
 r = run("tokens", '"unfinished')
 assert r.returncode == 1 and "unterminated string literal" in r.stderr
-assert ' err "unfinished' in r.stdout
+assert ' INVALID "unfinished' in r.stdout
 
 r = run("ast", "x: integer = ; y: integer = 4;")
 assert r.returncode == 1 and "expected expression" in r.stderr
@@ -104,7 +104,7 @@ assert '"value":"b"' in run("ast", "a: integer = ; b: integer = 4;").stdout
 
 r = run("tokens", "arr: array [2] integer; f: function integer () = { return a ^ b; } x: integer = a =< b; y: integer = a => b; z: boolean = a =! b;")
 assert r.returncode == 0, r.stderr
-for token in ("kw array", "kw function", "op =<", "op =>", "op =!", "op ^"):
+for token in ("KEYWORD array", "KEYWORD function", "OPERATOR =<", "OPERATOR =>", "OPERATOR =!", "OPERATOR ^"):
     assert token in r.stdout, (token, r.stdout)
 
 # AST locations point to the first token in each compound expression.
@@ -135,7 +135,7 @@ assert "nested function declarations are not allowed" in nested.stderr
 assert run("ast", "a" * 256 + ": integer;").returncode == 0
 assert run("ast", 's: string = "' + "a" * 256 + '";').returncode == 0
 assert run("ast", 's: string = "' + "é" * 256 + '";').returncode == 0
-assert " kw while" in run("tokens", "while (true) ;").stdout
+assert " KEYWORD while" in run("tokens", "while (true) ;").stdout
 assert run("tokens", r"c: char = '\n';").returncode == 0
 
 r = run("tokens", "c: char = ''; c: char = 'ab'; c: char = 'é';")
@@ -152,7 +152,7 @@ assert r.returncode == 0 and '<span class="comment">/* name */</span>' in r.stdo
 
 r = run("tokens", "& | ~ x: integer;")
 assert r.returncode == 1 and r.stderr.count("invalid character") == 3
-assert " id x" in r.stdout
+assert " IDENTIFIER x" in r.stdout
 
 for source in ('s: string = "first\\\nsecond";', "c: char = '\\\n';"):
     r = run("ast", source)
@@ -164,15 +164,19 @@ assert '"kind":"ReturnStmt"' in r.stdout
 
 r = run("tokens", "return x;")
 assert r.returncode == 0 and not r.stderr, r.stderr
-assert " kw return" in r.stdout and " id x" in r.stdout
+assert " KEYWORD return" in r.stdout and " IDENTIFIER x" in r.stdout
 
 r = run("tokens", "a: integer;\rreturn;\r\nx: integer;\ny: integer;")
-assert "<stdin>:2:1 kw return" in r.stdout
-assert "<stdin>:3:1 id x" in r.stdout and "<stdin>:4:1 id y" in r.stdout
+assert "<stdin>:2:1 KEYWORD return" in r.stdout
+assert "<stdin>:3:1 IDENTIFIER x" in r.stdout and "<stdin>:4:1 IDENTIFIER y" in r.stdout
 r = run("tokens", '// note\rreturn;')
-assert "<stdin>:2:1 kw return" in r.stdout
+assert "<stdin>:2:1 KEYWORD return" in r.stdout
 r = run("tokens", '"bad\rreturn;')
 assert r.returncode == 1 and "unterminated string literal" in r.stderr
-assert "<stdin>:2:1 kw return" in r.stdout
+assert "<stdin>:2:1 KEYWORD return" in r.stdout
+
+r = run("tokens", "1 true 'a' \"a\" ; @")
+for token in ("INTEGER 1", "BOOLEAN true", "CHARACTER 'a'", 'STRING "a"', "SEPARATOR ;", "INVALID @"):
+    assert token in r.stdout, r.stdout
 
 print("regression groups passed")
