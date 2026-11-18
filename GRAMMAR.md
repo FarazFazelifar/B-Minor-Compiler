@@ -17,19 +17,24 @@ Whitespace is skipped. Longest identifiers and integers are read first; keywords
 
 ## Parser
 
-Recursive descent with precedence climbing. `identifier :` starts a declaration; otherwise an identifier starts an expression. `function` after `:` selects a function declaration. `else` binds to the nearest `if`, resolving the dangling-else FIRST/FOLLOW conflict. The full grammar is not LL(1). Top-level recovery uses `;`, `}`, `if`, and `return`.
+Recursive descent with precedence climbing; the grammar has no left recursion. Expression alternatives start with an identifier, literal, `(`, `!`, `+`, or `-`. Statements use two-token lookahead: `identifier :` starts a variable declaration, otherwise it starts an expression. Other statement starters are distinct. At top level, `function` after `identifier :` selects a function declaration; a type selects a variable declaration.
+
+The dangling-else FIRST/FOLLOW conflict is resolved by binding `else` to the nearest `if`; the full grammar is not LL(1). Expression precedence and associativity are handled by precedence climbing. Top-level recovery uses `;`, `}`, `if`, and `return`.
 
 ```ebnf
 program       = { declaration } ;
-declaration   = identifier ":" ( type [ "=" ( expression | array-initializer ) ] ";"
-              | "function" return-type "(" [ parameter { "," parameter } ] ")"
-                ( "=" statement | ";" ) ) ;
+declaration   = variable-decl | function-decl ;
+variable-decl = identifier ":" ( atomic-type [ "=" expression ]
+              | array-type [ "=" ( expression | array-initializer ) ] ) ";" ;
+function-decl = identifier ":" "function" return-type "(" [ parameter { "," parameter } ] ")"
+                ( "=" statement | ";" ) ;
 parameter     = identifier ":" type ;
-type          = "integer" | "boolean" | "char" | "string"
-              | "array" "[" [ integer ] "]" ("integer" | "boolean" | "char" | "string") ;
-return-type   = "integer" | "boolean" | "char" | "string" | "void" ;
+type          = atomic-type | array-type ;
+atomic-type   = "integer" | "boolean" | "char" | "string" ;
+array-type    = "array" "[" [ integer ] "]" atomic-type ;
+return-type   = atomic-type | "void" ;
 array-initializer = "{" [ expression { "," expression } ] "}" ;
-statement     = block | declaration | "if" "(" expression ")" statement [ "else" statement ]
+statement     = block | variable-decl | "if" "(" expression ")" statement [ "else" statement ]
               | "for" "(" [ expression ] ";" [ expression ] ";" [ expression ] ")" statement
               | "return" [ expression ] ";" | "print" [ expression { "," expression } ] ";"
               | expression ";" | ";" ;
