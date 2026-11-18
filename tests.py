@@ -143,4 +143,11 @@ assert r.returncode == 1 and r.stderr.count("character literal") >= 3
 r = run("html", "x: integer = ;")
 assert r.returncode == 1 and '<span class="err">;</span>' in r.stdout
 
+source = '/* start */ x /* name */ : integer = 1; // end\n'
+r = run("ast", source)
+assert r.returncode == 0, r.stderr
+assert json.loads(r.stdout)["children"][0]["value"] == "x"
+r = run("html", source)
+assert r.returncode == 0 and '<span class="comment">/* name */</span>' in r.stdout
+
 print("regression groups passed")
