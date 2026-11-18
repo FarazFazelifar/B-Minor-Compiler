@@ -150,4 +150,8 @@ assert json.loads(r.stdout)["children"][0]["value"] == "x"
 r = run("html", source)
 assert r.returncode == 0 and '<span class="comment">/* name */</span>' in r.stdout
 
+r = run("tokens", "& | ~ x: integer;")
+assert r.returncode == 1 and r.stderr.count("invalid character") == 3
+assert " id x" in r.stdout
+
 print("regression groups passed")

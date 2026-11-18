@@ -59,7 +59,7 @@ public:
                 string two; two+=c; two+=peek(1);
                 static const unordered_set<string> pairs={"==","!=","<=",">=","=<","=>","=!","++","--","&&","||"};
                 if(pairs.count(two)) {take();take();k=Kind::Operator;}
-                else if(string("+-*/%=<>!&|^~=").find(c)!=string::npos) {take();k=Kind::Operator;}
+                else if(string("+-*/%=<>!^=").find(c)!=string::npos) {take();k=Kind::Operator;}
                 else if(string("(){}[];,:?.").find(c)!=string::npos) {take();k=Kind::Separator;}
                 else { take(); errors.push_back({string("invalid character '")+c+"'",file,ln,cl}); }
             }
