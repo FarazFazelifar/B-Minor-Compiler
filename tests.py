@@ -208,4 +208,11 @@ for source, position in (('s: string = "é"; x: integer;', 18), ('/* 😀 */ x: 
 r = subprocess.run(["./bminor", "tokens"], input=b"\xf0\x80 x: integer;", capture_output=True)
 assert r.returncode == 1 and r.stdout.count(b"INVALID") == 2 and b":1:4 IDENTIFIER x" in r.stdout
 
+source = 'main: function void () = { (foo)(); }'
+r = run("ast", source)
+assert r.returncode == 0, r.stderr
+call = json.loads(r.stdout)["children"][0]["children"][2]["children"][0]["children"][0]
+assert call["kind"] == "CallExpr" and call["children"][0]["children"][0]["column"] == source.index("foo") + 1
+assert '<span class="fn">foo</span>' in run("html", source).stdout
+
 print("regression groups passed")
