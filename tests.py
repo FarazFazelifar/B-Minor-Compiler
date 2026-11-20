@@ -234,4 +234,8 @@ tree = json.loads(r.stdout)
 assignment = tree["children"][0]["children"][2]["children"][0]["children"][0]
 assert r.returncode == 0 and assignment["kind"] == "AssignExpr" and assignment["children"][1]["kind"] == "UnaryExpr"
 
+for args in (["unknown"], ["ast", "ignored", "extra"]):
+    r = subprocess.run(["./bminor", *args], input="", text=True, capture_output=True, timeout=5)
+    assert r.returncode == 2 and "usage:" in r.stderr and not r.stdout, (args, r)
+
 print("regression groups passed")
